@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+		<title>Controle de motor por ESP8266 e Arduino Uno com ThingSpeak</title>
+		<style>
+			html {
+				font-family: Arial;
+				display: inline-block;
+				margin: 0px auto;
+				text-align: center;
+			}
+      
+			h1 { font-size: 2.0rem; color:#2980b9;}
+      
+			.Girar_sentido_horário {
+				display: inline-block;
+				padding: 15px 25px;
+				font-size: 24px;
+				font-weight: bold;
+				cursor: pointer;
+				text-align: center;
+				text-decoration: none;
+				outline: none;
+				color: #fff;
+				background-color: #4CAF50;
+				border: none;
+				border-radius: 15px;
+				box-shadow: 0 5px #999;
+			}
+		
+			.Girar_sentido_horário:hover {background-color: #3e8e41}
+			.Girar_sentido_horário:active {
+				background-color: #3e8e41;
+				box-shadow: 0 1px #666;
+				transform: translateY(4px);
+			}
+      
+			.Girar_sentido_anti_horário {
+				display: inline-block;
+				padding: 15px 25px;
+				font-size: 24px;
+				font-weight: bold;
+				cursor: pointer;
+				text-align: center;
+				text-decoration: none;
+				outline: none;
+				color: #fff;
+				background-color: #e74c3c;
+				border: none;
+				border-radius: 15px;
+				box-shadow: 0 5px #999;
+			}
+		
+			.Girar_sentido_anti_horário:hover {background-color: #c0392b}
+			.Girar_sentido_anti_horário:active {
+				background-color: #c0392b;
+				box-shadow: 0 1px #666;
+				transform: translateY(4px);
+			}
+			
+			.Desligar_motor {
+				display: inline-block;
+				padding: 15px 25px;
+				font-size: 24px;
+				font-weight: bold;
+				cursor: pointer;
+				text-align: center;
+				text-decoration: none;
+				outline: none;
+				color: #black;
+				background-color: #4CAF50;
+				border: none;
+				border-radius: 15px;
+				box-shadow: 0 5px #999;
+			}
+			.Desligar_motor:hover {background-color: #white}
+			.Desligar_motor:active {
+				background-color: #white;
+				box-shadow: 0 1px #666;
+				transform: translateY(4px);
+			}
+			}
+			.text {
+				text-align: center;
+				font-size: 18px;
+				width: 200px;
+				height: 22px;
+				border: 3px solid #9b59b6;
+				border-radius: 5px;
+				padding: 3px;
+				-webkit-transition: border 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+				-moz-transition: border 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+				-ms-transition: border 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+				-o-transition: border 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+				transition: border 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+			}
+
+			.text:focus {
+				border: 3px solid #8e44ad;
+				box-shadow: 0 0 7px #8e44ad;
+				outline: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<h1>Controle de motor por ESP8266 e Arduino Uno com ThingSpeak</h1>
+			<br>
+			<p style="color:#2c3e50;font-weight: bold;font-size: 18px;">ThingSpeak API Key : 
+				<input type="password" id="ts-api-key" class="text" placeholder="ThingSpeak API Key" />
+				<input type="checkbox" onclick="hideapikey()">Show API Key
+			</p>
+			<p style="color:#2c3e50;font-weight: bold;font-size: 18px;">ThingSpeak Channel ID : 
+				<input type="password" id="ts-channel-id" class="text" placeholder="ThingSpeak Channel ID" />
+				<input type="checkbox" onclick="hidechannelid()">Show Channel ID
+			</p>
+			<br>
+			<button type="button" id="Ligar o Motor - Girar no Sentido Horário" class="Girar_sentido_horário" > Girar no Sentido Horário</button>
+			<button type="button" id="Ligar o Motor - Girar no Sentido Anti-Horário" class="Girar_sentido_anti_horário" > Girar no Sentido Anti-Horário</button>
+			<button type="button" id="Desligar o Motor" class="Desligar_motor" >Desligar</button>
+			<button type="button" id="Velocidade 0" class="Velocidade0" >Velocidade 0</button>
+			<button type="button" id="Velocidade 1" class="Velocidade1" >Velocidade 1</button>
+			<button type="button" id="Velocidade 2" class="Velocidade2" >Velocidade 2</button>
+			<button type="button" id="Velocidade 3" class="Velocidade3" >Velocidade 3</button><br>
+			
+		</div>
+		<br>
+		<img id="MotorImage" src=" data:image/png;base64,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">
+		<div>
+			<p style="color:#2c3e40;font-weight: bold;font-size: 24px;">Motor está: <span id="EstadodoMotor">Atualizando ....</span></p>		
+		</div>
+    
+		<script>
+			function hideapikey() {
+				var x = document.getElementById("ts-api-key");
+				if (x.type === "password") {
+					x.type = "text";
+				} else {
+					x.type = "password";
+				}
+			}
+			function hidechannelid() {
+				var x = document.getElementById("ts-channel-id");
+				if (x.type === "password") {
+					x.type = "text";
+				} else {
+					x.type = "password";
+				}
+			}
+			
+			document.getElementById('Ligar o Motor - Girar no Sentido Horário').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field4=1"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			document.getElementById('Ligar o Motor - Girar no Sentido Anti-Horário').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field4=2"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+		
+			document.getElementById('Desligar o Motor').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field4=0"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			document.getElementById('Velocidade 0').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field3=0"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			document.getElementById('Velocidade 1').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field3=1"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			document.getElementById('Velocidade 2').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field3=2"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			document.getElementById('Velocidade 3').addEventListener('click', function() {
+				var ts_api_key = document.getElementById('ts-api-key').value;
+				var url = "http://api.thingspeak.com/update?api_key="+ ts_api_key + "&field3=3"
+				$.getJSON(url, function(data) {
+					console.log(data);
+				});
+			});
+			
+			setInterval(function() {
+			// Call a function repetatively with 15 Second interval
+				getThingSpeakLightState();
+			}, 15000);
+			
+			function getThingSpeakLightState() {
+				var ts_channel_id = document.getElementById('ts-channel-id').value;
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						var myObj = JSON.parse(this.responseText);
+						if (myObj.field1 == 4) {
+							document.getElementById("EstadodoMotor").innerHTML = "1";
+							document.getElementById("MotorImage").src=" data:image/png;base64,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";
+						}
+						else{
+							if (myObj.field1==4)
+							{
+								document.getElementById("EstadodoMotor").innerHTML = "2";
+								document.getElementById("MotorImage").src=" data:image/png;base64,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";
+							}
+							else{
+								document.getElementById("EstadodoMotor").innerHTML = "0";
+								document.getElementById("MotorImage").src=" data:image/png;base64,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";
+								}
+						}
+					}
+				};
+				xhttp.open("GET", "https://api.thingspeak.com/channels/" + ts_channel_id + "/fields/1/last.json", true);
+				xhttp.send();
+			}
+		</script>
+	</body>
+</html>
